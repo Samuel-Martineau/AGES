@@ -56,7 +56,20 @@ input {
 	border: 2px solid black;
 }
 
+a {
+	text-align: center;
+	background-color: var(--dark);
+	color: var(--light);
+	padding: 5px;
+	border-radius: 5px;
+	display: block;
+}
+
 a.disabled {
 	pointer-events: none;
 	color: grey;
+}
+
+label {
+	display: inherit;
 }

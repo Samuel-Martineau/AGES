@@ -22,3 +22,269 @@ index 89592e659039e2786ecfcbb3596d0e139f1b7fbf..6dd992a486df8afabc909706b59b0744
      };
      events(): {} & {
          [evt: string]: CustomEvent<any>;
+diff --git a/dist/index.d.ts b/dist/index.d.ts
+index 9763347b9b8df52aea1eba5ba8da21ba78bc6949..3aecdc0d3449e67abba8e856c60e9075d2b11a15 100644
+--- a/dist/index.d.ts
++++ b/dist/index.d.ts
+@@ -1,17 +1,36 @@
+-import Doc from './components/Doc.svelte';
+-import User from './components/User.svelte';
+-import Collection from './components/Collection.svelte';
+-import FirebaseApp from './components/FirebaseApp.svelte';
+-import SignedOut from './components/SignedOut.svelte';
+-import SignedIn from './components/SignedIn.svelte';
+-import UploadTask from './components/UploadTask.svelte';
+-import StorageList from './components/StorageList.svelte';
+-import DownloadURL from './components/DownloadURL.svelte';
+-import { downloadUrlStore } from './stores/storage.js';
+-import { storageListStore } from './stores/storage.js';
+-import { uploadTaskStore } from './stores/storage.js';
+-import { docStore } from './stores/firestore.js';
+-import { collectionStore } from './stores/firestore.js';
+-import { userStore } from './stores/auth.js';
+-import { getFirebaseContext } from './stores/sdk.js';
+-export { Doc, User, Collection, FirebaseApp, SignedOut, SignedIn, UploadTask, StorageList, DownloadURL, downloadUrlStore, storageListStore, uploadTaskStore, docStore, collectionStore, userStore, getFirebaseContext };
++import Doc from "./components/Doc.svelte";
++import User from "./components/User.svelte";
++import Collection from "./components/Collection.svelte";
++import FirebaseApp from "./components/FirebaseApp.svelte";
++import SignedOut from "./components/SignedOut.svelte";
++import SignedIn from "./components/SignedIn.svelte";
++import UploadTask from "./components/UploadTask.svelte";
++import StorageList from "./components/StorageList.svelte";
++import DownloadURL from "./components/DownloadURL.svelte";
++import { downloadUrlStore } from "./stores/storage.js";
++import { storageListStore } from "./stores/storage.js";
++import { uploadTaskStore } from "./stores/storage.js";
++import { docStore, DocStore } from "./stores/firestore.js";
++import { collectionStore, CollectionStore } from "./stores/firestore.js";
++import { userStore } from "./stores/auth.js";
++import { getFirebaseContext } from "./stores/sdk.js";
++export {
++  Doc,
++  User,
++  Collection,
++  FirebaseApp,
++  SignedOut,
++  SignedIn,
++  UploadTask,
++  StorageList,
++  DownloadURL,
++  downloadUrlStore,
++  storageListStore,
++  uploadTaskStore,
++  docStore,
++  collectionStore,
++  userStore,
++  getFirebaseContext,
++  DocStore,
++  CollectionStore,
++};
+diff --git a/dist/stores/firestore.d.ts b/dist/stores/firestore.d.ts
+index a43f447a357148eec5fbade37fb561115cdc3232..fa8bd49592b3fc585cba50237dcc0e71aad051b6 100644
+--- a/dist/stores/firestore.d.ts
++++ b/dist/stores/firestore.d.ts
+@@ -1,8 +1,14 @@
+-import type { Query, CollectionReference, DocumentReference, Firestore } from "firebase/firestore";
+-interface DocStore<T> {
+-    subscribe: (cb: (value: T | null) => void) => void | (() => void);
+-    ref: DocumentReference<T> | null;
+-    id: string;
++import type {
++  Query,
++  CollectionReference,
++  DocumentReference,
++  Firestore,
++} from "firebase/firestore";
++export interface DocStore<T> {
++  subscribe: (cb: (value: T | null) => void) => void | (() => void);
++  ref: DocumentReference<T> | null;
++  id: string;
++  set: (value: T) => void;
+ }
+ /**
+  * @param  {Firestore} firestore firebase firestore instance
+@@ -10,10 +16,14 @@ interface DocStore<T> {
+  * @param  {T} startWith optional default data
+  * @returns a store with realtime updates on document data
+  */
+-export declare function docStore<T = any>(firestore: Firestore, ref: string | DocumentReference<T>, startWith?: T): DocStore<T>;
+-interface CollectionStore<T> {
+-    subscribe: (cb: (value: T | []) => void) => void | (() => void);
+-    ref: CollectionReference<T> | Query<T> | null;
++export declare function docStore<T = any>(
++  firestore: Firestore,
++  ref: string | DocumentReference<T>,
++  startWith?: T
++): DocStore<T>;
++export interface CollectionStore<T> {
++  subscribe: (cb: (value: T | []) => void) => void | (() => void);
++  ref: CollectionReference<T> | Query<T> | null;
+ }
+ /**
+  * @param  {Firestore} firestore firebase firestore instance
+@@ -21,5 +31,9 @@ interface CollectionStore<T> {
+  * @param  {[]} startWith optional default data
+  * @returns a store with realtime updates on collection data
+  */
+-export declare function collectionStore<T>(firestore: Firestore, ref: string | Query<T> | CollectionReference<T>, startWith?: T[]): CollectionStore<T[]>;
++export declare function collectionStore<T>(
++  firestore: Firestore,
++  ref: string | Query<T> | CollectionReference<T>,
++  startWith?: T[]
++): CollectionStore<T[]>;
+ export {};
+diff --git a/dist/stores/firestore.js b/dist/stores/firestore.js
+index d9be7002cf19b29c9ce35ca8795548e916cf1c30..9ee8ebbc81b145e0395468fd0febe37fed441114 100644
+--- a/dist/stores/firestore.js
++++ b/dist/stores/firestore.js
+@@ -1,5 +1,5 @@
+ import { writable } from "svelte/store";
+-import { doc, collection, onSnapshot } from "firebase/firestore";
++import { doc, collection, onSnapshot, updateDoc } from "firebase/firestore";
+ /**
+  * @param  {Firestore} firestore firebase firestore instance
+  * @param  {string|DocumentReference} ref document path or reference
+@@ -7,40 +7,41 @@ import { doc, collection, onSnapshot } from "firebase/firestore";
+  * @returns a store with realtime updates on document data
+  */
+ export function docStore(firestore, ref, startWith) {
+-    let unsubscribe;
+-    // Fallback for SSR
+-    if (!globalThis.window) {
+-        const { subscribe } = writable(startWith);
+-        return {
+-            subscribe,
+-            ref: null,
+-            id: "",
+-        };
+-    }
+-    // Fallback for missing SDK
+-    if (!firestore) {
+-        console.warn("Firestore is not initialized. Are you missing FirebaseApp as a parent component?");
+-        const { subscribe } = writable(null);
+-        return {
+-            subscribe,
+-            ref: null,
+-            id: "",
+-        };
+-    }
+-    const docRef = typeof ref === "string"
+-        ? doc(firestore, ref)
+-        : ref;
+-    const { subscribe } = writable(startWith, (set) => {
+-        unsubscribe = onSnapshot(docRef, (snapshot) => {
+-            set(snapshot.data() ?? null);
+-        });
+-        return () => unsubscribe();
+-    });
++  let unsubscribe;
++  // Fallback for SSR
++  if (!globalThis.window) {
++    const { subscribe } = writable(startWith);
++    return {
++      subscribe,
++      ref: null,
++      id: "",
++    };
++  }
++  // Fallback for missing SDK
++  if (!firestore) {
++    console.warn(
++      "Firestore is not initialized. Are you missing FirebaseApp as a parent component?"
++    );
++    const { subscribe } = writable(null);
+     return {
+-        subscribe,
+-        ref: docRef,
+-        id: docRef.id,
++      subscribe,
++      ref: null,
++      id: "",
+     };
++  }
++  const docRef = typeof ref === "string" ? doc(firestore, ref) : ref;
++  const { subscribe } = writable(startWith, (set) => {
++    unsubscribe = onSnapshot(docRef, (snapshot) => {
++      set(snapshot.data() ?? null);
++    });
++    return () => unsubscribe();
++  });
++  return {
++    subscribe,
++    ref: docRef,
++    id: docRef.id,
++    set: (v) => updateDoc(docRef, v),
++  };
+ }
+ /**
+  * @param  {Firestore} firestore firebase firestore instance
+@@ -49,36 +50,38 @@ export function docStore(firestore, ref, startWith) {
+  * @returns a store with realtime updates on collection data
+  */
+ export function collectionStore(firestore, ref, startWith = []) {
+-    let unsubscribe;
+-    // Fallback for SSR
+-    if (!globalThis.window) {
+-        const { subscribe } = writable(startWith);
+-        return {
+-            subscribe,
+-            ref: null,
+-        };
+-    }
+-    // Fallback for missing SDK
+-    if (!firestore) {
+-        console.warn("Firestore is not initialized. Are you missing FirebaseApp as a parent component?");
+-        const { subscribe } = writable([]);
+-        return {
+-            subscribe,
+-            ref: null,
+-        };
+-    }
+-    const colRef = typeof ref === "string" ? collection(firestore, ref) : ref;
+-    const { subscribe } = writable(startWith, (set) => {
+-        unsubscribe = onSnapshot(colRef, (snapshot) => {
+-            const data = snapshot.docs.map((s) => {
+-                return { id: s.id, ref: s.ref, ...s.data() };
+-            });
+-            set(data);
+-        });
+-        return () => unsubscribe();
+-    });
++  let unsubscribe;
++  // Fallback for SSR
++  if (!globalThis.window) {
++    const { subscribe } = writable(startWith);
++    return {
++      subscribe,
++      ref: null,
++    };
++  }
++  // Fallback for missing SDK
++  if (!firestore) {
++    console.warn(
++      "Firestore is not initialized. Are you missing FirebaseApp as a parent component?"
++    );
++    const { subscribe } = writable([]);
+     return {
+-        subscribe,
+-        ref: colRef,
++      subscribe,
++      ref: null,
+     };
++  }
++  const colRef = typeof ref === "string" ? collection(firestore, ref) : ref;
++  const { subscribe } = writable(startWith, (set) => {
++    unsubscribe = onSnapshot(colRef, (snapshot) => {
++      const data = snapshot.docs.map((s) => {
++        return { id: s.id, ref: s.ref, ...s.data() };
++      });
++      set(data);
++    });
++    return () => unsubscribe();
++  });
++  return {
++    subscribe,
++    ref: colRef,
++  };
+ }

@@ -1,1 +1,0 @@
-<p>cast vote</p>

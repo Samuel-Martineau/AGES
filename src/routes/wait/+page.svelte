@@ -1,1 +1,0 @@
-<p>Waiting page</p>

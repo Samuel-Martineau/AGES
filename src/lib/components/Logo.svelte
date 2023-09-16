@@ -1,8 +1,13 @@
+<script lang="ts">
+	import { emojis } from '$lib/random';
+
+	const randomEmojis = emojis.sort(() => 0.5 - Math.random()).slice(0, 4);
+</script>
+
 <div>
-	<span>🐋</span>
-	<span>🥺</span>
-	<span>😡</span>
-	<span>🐍</span>
+	{#each randomEmojis as emoji}
+		<span>{emoji}</span>
+	{/each}
 </div>
 
 <style>
