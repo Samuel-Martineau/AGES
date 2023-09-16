@@ -1,0 +1,24 @@
+diff --git a/dist/components/Doc.svelte b/dist/components/Doc.svelte
+index 0f49d430b76d5d97e38191abba781f95554ffc94..53588d009f8d77cdd78462f0ec51df154928b035 100644
+--- a/dist/components/Doc.svelte
++++ b/dist/components/Doc.svelte
+@@ -1,6 +1,7 @@
+ <script generics="Data extends DocumentData">import { docStore } from "../stores/firestore.js";
+ import { getFirebaseContext } from "../stores/sdk.js";
+ export let ref;
++export let type;
+ export let startWith = void 0;
+ const { firestore } = getFirebaseContext();
+ let store = docStore(firestore, ref, startWith);
+diff --git a/dist/components/Doc.svelte.d.ts b/dist/components/Doc.svelte.d.ts
+index 89592e659039e2786ecfcbb3596d0e139f1b7fbf..6dd992a486df8afabc909706b59b07445e320fc3 100644
+--- a/dist/components/Doc.svelte.d.ts
++++ b/dist/components/Doc.svelte.d.ts
+@@ -4,6 +4,7 @@ declare class __sveltets_Render<Data extends DocumentData> {
+     props(): {
+         ref: string | DocumentReference<Data>;
+         startWith?: Data | undefined;
++        type?: Data;
+     };
+     events(): {} & {
+         [evt: string]: CustomEvent<any>;
