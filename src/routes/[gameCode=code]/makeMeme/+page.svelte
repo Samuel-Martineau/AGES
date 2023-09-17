@@ -21,7 +21,6 @@
 	$: isInvalid = boxes.some((b) => b.trim() === '');
 
 	async function generateMeme() {
-		isGenerating = true;
 		const response = await fetch($page.url.pathname, {
 			method: 'POST',
 			body: JSON.stringify({ templateId: memeTemplate.id, boxes }),
@@ -60,6 +59,7 @@
 				type="text"
 				placeholder="Caption goes here"
 				bind:value={box}
+				on:input={() => (isGenerating = true)}
 				on:input={debouncedGenerateMeme}
 			/>
 		{/each}

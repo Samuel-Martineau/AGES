@@ -1,12 +1,17 @@
 <script lang="ts">
-	import { emojis, colors } from '$lib/random';
 	import { playersData, gameData, playerData, user } from '$lib/firebase';
 
-	$: pointsForGuessingAi = $gameData.roundMemes['ai'].guessedBy.includes($user!.uid)
-		? ($playersData.length - 1) * 100
+	$: pointsForGuessingAi = $gameData.roundMemes?.ai
+		? $gameData.roundMemes.ai.guessedBy.includes($user!.uid)
+			? ($playersData.length - 1) * 100
+			: 0
 		: 0;
-	$: pointsForLaughter = 50 * $gameData.roundMemes[$user!.uid].laughedBy.length;
-	$: pointsForVomiting = -50 * $gameData.roundMemes[$user!.uid].vomitedBy.length;
+	$: pointsForLaughter = $gameData.roundMemes?.[$user!.uid]
+		? 50 * $gameData.roundMemes[$user!.uid].laughedBy.length
+		: 0;
+	$: pointsForVomiting = $gameData.roundMemes?.[$user!.uid]
+		? -50 * $gameData.roundMemes[$user!.uid].vomitedBy.length
+		: 0;
 	$: $playerData.score = pointsForGuessingAi + pointsForLaughter + pointsForVomiting;
 
 	$: sorted = $playersData.toSorted((a, b) => {
@@ -16,14 +21,16 @@
 
 <div class="leaderboard">
 	{#each sorted as player (player.id)}
-		<div class="emoji" style="--color: {player.color};">
-			{player.emoji}
-		</div>
+		{#if player.id !== 'ai'}
+			<div class="emoji" style="--color: {player.color};">
+				{player.emoji}
+			</div>
 
-		<div class="player" style="--color: {player.color};">
-			{player.username} <br />
-			{player.score + player.previousScore}
-		</div>
+			<div class="player" style="--color: {player.color};">
+				{player.username} <br />
+				{player.score + player.previousScore}
+			</div>
+		{/if}
 	{/each}
 </div>
 

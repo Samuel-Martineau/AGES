@@ -26,5 +26,7 @@
 <div><Tabs {items} /></div>
 
 {#if $gameData.host === $user?.uid}
-	<Button on:click={startGame} disabled={!areUsernamesValid}>Start Game</Button>
+	<div style="padding-bottom: 25px;">
+		<Button on:click={startGame} disabled={!areUsernamesValid}>Start Game</Button>
+	</div>
 {/if}

@@ -5,6 +5,8 @@
 
 	$: if ($gameData.phase === 'lead') goto('./lead');
 
+	// $: console.log($playersData.find((p) => p.id === 'ai'));
+
 	function next() {
 		$gameData.phase = 'lead';
 	}
@@ -23,14 +25,14 @@
 			<div style="position: relative">
 				<div class="center">
 					<h1>
-						{$playersData.find((p) => p.id == maker)?.emoji}
+						{$playersData.find((p) => p.id === maker)?.emoji}
 						<!-- <br /> -->
 					</h1>
 					<!-- <div class="emoji" style="--color: {$playersData.find((p) => p.id == maker)?.color};">
 						{$playersData.find((p) => p.id == maker)?.emoji}
 					</div> -->
 					<h6>
-						{$playersData.find((p) => p.id == maker)?.username}
+						{$playersData.find((p) => p.id === maker)?.username}
 					</h6>
 				</div>
 				<ul class="emojis-list top-left-emojis">
