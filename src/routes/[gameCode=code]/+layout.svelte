@@ -1,9 +1,11 @@
 <script lang="ts">
-	import { gameData } from '$lib/firebase';
+	import { gameData, playerData, playersData } from '$lib/firebase';
 
 	$gameData;
+	$playerData;
+	$playersData;
 </script>
 
-{#if $gameData}
+{#if $gameData && $playerData && $playersData}
 	<slot />
 {/if}

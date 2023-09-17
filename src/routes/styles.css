@@ -15,18 +15,20 @@
 
 html {
 	font-size: 20px;
+	overflow: hidden;
 }
 
 body {
 	background: linear-gradient(45deg, var(--medium), var(--light), var(--accent));
 	background-size: 400%;
 	animation: bg-animation 15s infinite alternate linear;
-	height: 100vh;
+	height: 100dvh;
 	width: 100vw;
 	display: flex;
 	flex-direction: column;
-	justify-content: space-evenly;
+	justify-content: space-between;
 	align-items: center;
+	overflow: hidden;
 }
 
 @keyframes bg-animation {

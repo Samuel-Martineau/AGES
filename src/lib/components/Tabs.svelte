@@ -22,13 +22,15 @@
 
 <style>
 	div {
-		height: 50vh;
+		height: 50dvh;
 		overflow-y: auto;
+		width: 90vw;
 	}
 	ul {
 		display: flex;
 		flex-wrap: wrap;
-		padding-left: 0;
+		padding-left: auto;
+		padding-right: auto;
 		margin-bottom: 0;
 		list-style: none;
 		border-bottom: 1px solid #dee2e6;

@@ -1,18 +1,72 @@
 <script lang="ts">
-	let memeData = {
-		src: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcROp8KtGXSZiDqlMkUxjjXl0bjHacqNVkppbA&usqp=CAU',
-		numBoxes: 2
-	};
+	import { page } from '$app/stores';
+	import Button from '$lib/components/Button.svelte';
+	import { getRandomMemeTemplate } from '$lib/random';
+	import debounce from 'debounce';
+	import { firestore, user } from '$lib/firebase';
+	import { DocumentReference, arrayUnion, doc, updateDoc } from 'firebase/firestore';
+	import type { PageData } from './$types';
+	import type { GameData } from '$lib/types';
+	import { goto } from '$app/navigation';
+
+	export let data: PageData;
+
+	const memeTemplate = getRandomMemeTemplate();
+
+	const boxes = new Array(memeTemplate.boxCount).fill('');
+
+	let memeUrl: string | undefined = undefined;
+
+	let isGenerating = false;
+	$: isInvalid = boxes.some((b) => b.trim() === '');
+
+	async function generateMeme() {
+		isGenerating = true;
+		const response = await fetch($page.url.pathname, {
+			method: 'POST',
+			body: JSON.stringify({ templateId: memeTemplate.id, boxes }),
+			headers: {
+				'content-type': 'application/json'
+			}
+		});
+		memeUrl = await response.text();
+		isGenerating = false;
+	}
+	const debouncedGenerateMeme = debounce(generateMeme, 1000);
+
+	async function submit() {
+		if (!memeUrl || !$user) return;
+		const ref = doc(firestore, 'games', data.gameCode!) as DocumentReference<GameData>;
+		await updateDoc(ref, {
+			[`roundMemes.${$user.uid}`]: {
+				memeUrl,
+				guessedBy: [],
+				laughedBy: [],
+				vomitedBy: [],
+				randomKey: Math.random().toString()
+			} satisfies GameData['roundMemes'][number]
+		});
+		await goto(`./makeMeme/wait`);
+	}
 </script>
 
 <!-- <p><a href="/wait">Meme it!</a></p> -->
-<img src={memeData.src} alt="meme" />
+<img src={memeUrl ?? memeTemplate.url} alt="meme" />
 
 <form>
-	{#each [...Array(memeData.numBoxes).keys()] as numBox}
-		<input type="text" placeholder="Caption goes here" />
+	{#each boxes as box}
+		<input
+			type="text"
+			placeholder="Caption goes here"
+			bind:value={box}
+			on:input={debouncedGenerateMeme}
+		/>
 	{/each}
 </form>
+
+<Button on:click={submit} disabled={isInvalid || isGenerating}>Meme it!</Button>
+
+<div />
 
 <style>
 	/* * {
@@ -22,17 +76,17 @@
 	img {
 		width: 90vw;
 		border-radius: 25px;
-		margin-left: 2.5vh;
-		margin-right: 2.5vh;
-		margin-bottom: 2.5vh;
+		margin-left: 2.5dvh;
+		margin-right: 2.5dvh;
+		margin-bottom: 2.5dvh;
 	}
 
 	input {
 		width: 90vw;
-		margin-left: 2.5vh;
-		margin-right: 2.5vh;
-		margin-bottom: 2vh;
-		line-height: 7vh;
+		margin-left: 2.5dvh;
+		margin-right: 2.5dvh;
+		margin-bottom: 2dvh;
+		line-height: 7dvh;
 		cursor: pointer;
 		display: inline-block;
 		user-select: none;

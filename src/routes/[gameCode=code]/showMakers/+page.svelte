@@ -1,74 +1,80 @@
-<!-- naive infinite scroll with #each loop -->
-
 <script lang="ts">
-	interface MemeType {
-		url: string;
-		color: string;
+	import { goto } from '$app/navigation';
+	import Button from '$lib/components/Button.svelte';
+	import { gameData, playersData, user } from '$lib/firebase';
+
+	$: if ($gameData.phase === 'lead') goto('./lead');
+
+	function next() {
+		$gameData.phase = 'lead';
 	}
-
-	let memeObjects: MemeType[] = [
-		{
-			url: 'https://media.npr.org/assets/img/2015/03/03/overly_custom-39399d2cf8b6395770e3f10fd45b22ce39df70d4.jpg',
-			color: 'FF00FF'
-		},
-		{
-			url: 'https://primulaproducts.com/cdn/shop/articles/Coffee_Meme_-_1_600x.jpg?v=1633903536',
-			color: 'FFFFFF'
-		},
-		{
-			url: 'https://d.newsweek.com/en/full/1176971/obesity-meme.png?w=1600&h=900&q=88&f=0c8293185b292dc0d5eb47eace629bd1',
-			color: 'FF0000'
-		},
-		{
-			url: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcROp8KtGXSZiDqlMkUxjjXl0bjHacqNVkppbA&usqp=CAU',
-			color: '0000FF'
-		}
-	];
-
-	let flipped = false;
 </script>
 
-<div class="emoji-container">
-	{#each memeObjects as memeObject}
+{#if $gameData.host === $user?.uid}
+	<div class="next">
+		<Button on:click={next}>Next</Button>
+	</div>
+{/if}
+
+<div class="meme-container">
+	{#each Object.entries($gameData.roundMemes).sort( ([, { randomKey: k1 }], [, { randomKey: k2 }]) => k1.localeCompare(k2) ) as [maker, meme] (maker)}
+		<!-- {#each $gameData.roundMemes as [maker, roundMeme]} -->
 		<div class="meme">
-			<!-- <div style="position: relative">
+			<div style="position: relative">
+				<div class="center">
+					<h1>
+						{$playersData.find((p) => p.id == maker)?.emoji}
+						<!-- <br /> -->
+					</h1>
+					<!-- <div class="emoji" style="--color: {$playersData.find((p) => p.id == maker)?.color};">
+						{$playersData.find((p) => p.id == maker)?.emoji}
+					</div> -->
+					<h6>
+						{$playersData.find((p) => p.id == maker)?.username}
+					</h6>
+				</div>
+				<ul class="emojis-list top-left-emojis">
+					{#each meme.guessedBy as guessedPlayerId, i}
+						<!-- show at most 3 memes -->
+						{#if i < 4}
+							<!-- <h2>
+								{$playersData.find((p) => p.id == guessedPlayerId)?.emoji}
+							</h2> -->
+
+							<div
+								class="emoji"
+								style="--color: {$playersData.find((p) => p.id == guessedPlayerId)?.color};"
+							>
+								{$playersData.find((p) => p.id == guessedPlayerId)?.emoji}
+							</div>
+						{/if}
+					{/each}
+				</ul>
+				<ul class="emojist-list laugh-emojis">
+					<!-- show at most 3 memes -->
+					{#each [...Array(Math.min(meme.laughedBy.length, 3)).keys()] as _}
+						<h2>😂</h2>
+					{/each}
+				</ul>
+				<ul class="emojist-list vomit-emojis">
+					<!-- show at most 3 memes -->
+					{#each [...Array(Math.min(meme.vomitedBy.length, 3)).keys()] as _}
+						<h2>🤢</h2>
+					{/each}
+				</ul>
+
 				<div
 					style="position: absolute; 
-						background-color: #{memeObject.color};
+						background-color: {$playersData.find((p) => p.id === maker)?.color};
 						opacity: 0.5;
-						width: 100%; 
 						height: 100%;
-						border-radius: 25px;"
+						border-radius: 25px;
+						width: 90vw;
+						<!-- margin-left: 2.5dvh; -->
+						margin-right: 5dvh;"
 				/>
-				<img style="display: block;" src={memeObject.url} alt="meme" />
-				<button class="card" class:flipped on:click={() => (flipped = !flipped)}>hello</button>
-			</div> -->
-
-			<div
-				class="card"
-				class:flipped
-				style:transform={flipped ? 'rotateY(0)' : ''}
-				style:--bg-1="palegoldenrod"
-				style:--bg-2="black"
-				style:--bg-3="goldenrod"
-			>
-				<div class="front">
-					<!-- <span class="symbol">♠</span> -->
-					<img style="display: block;" src={memeObject.url} alt="meme" />
-				</div>
-				<div class="back">
-					<div
-						style="position: absolute; 
-							background-color: #{memeObject.color};
-							opacity: 0.5;
-							width: 100%; 
-							height: 100%;
-							border-radius: 25px;"
-					/>
-				</div>
+				<img src={meme.memeUrl} alt="meme" />
 			</div>
-
-			<button on:click={() => (flipped = !flipped)}>Button</button>
 		</div>
 	{/each}
 </div>
@@ -76,97 +82,129 @@
 <!-- {/each} -->
 
 <style>
-	img {
+	.next {
+		position: absolute;
+		left: 15px;
+		bottom: 10px;
+		line-height: 5px;
+		z-index: 100;
+	}
+
+	/* img {
 		width: 90vw;
 		border-radius: 25px;
-		gap: 60px 60px;
-		/* margin-left: 2.5vh; */
-		/* margin-right: 2.5vh; */
+		margin-left: 2.5dvh;
+		margin-right: 2.5dvh; */
+	/* filter: blur(2px); */
+	/* } */
+
+	h1 {
+		font-size: 128px;
+	}
+	/* 
+	.meme-container {
+		width: 90vw;
+		display: flex;
+		flex-direction: column;
+		flex-wrap: wrap;
+		overflow-y: auto;
+		width: 90vw;
+		gap: 25px;
+		display: flex;
+		flex-wrap: wrap;
+		height: 80dvh;
+		overflow-y: auto;
+		margin-top: -12dvh;
+		padding-top: 12dvh;
+		box-sizing: border-box;
+		mask-image: linear-gradient(to bottom, transparent 0%, black 15%);
+	} */
+
+	img {
+		border-radius: 25px;
+		display: block;
+		width: 100%;
+		box-sizing: content-box;
+	}
+
+	.meme-container {
+		width: 90vw;
+		gap: 25px;
+		padding-bottom: 25px;
+		display: flex;
+		flex-wrap: wrap;
+		height: 80dvh;
+		overflow-y: auto;
+		margin-top: -12dvh;
+		padding-top: 12dvh;
+		box-sizing: border-box;
+		mask-image: linear-gradient(to bottom, transparent 0%, black 15%);
 	}
 
 	.meme {
-		/* margin: 10px; */
 		text-align: right;
-		display: flex;
-		flex-direction: column;
-		gap: 1em;
-		height: 100%;
-		align-items: center;
-		justify-content: center;
-		perspective: 100vh;
+		width: 100%;
 	}
 
-	.card {
-		position: relative;
-		aspect-ratio: 2.5 / 3.5;
-		font-size: min(1vh, 0.25rem);
-		height: 80em;
-		background: var(--bg-1);
-		border-radius: 2em;
-		transform: rotateX(180deg);
-		transition: transform 2s;
-		transform-style: preserve-3d;
-		padding: 0;
-		user-select: none;
-		cursor: pointer;
+	.meme {
+		margin-bottom: 1.5dvh; /* Add margin to separate the memes vertically */
+		text-align: right;
 	}
 
-	.card.flipped {
-		transform: rotateX(0);
-	}
-
-	.back,
-	.front {
-		display: flex;
-		align-items: center;
-		justify-content: center;
+	.center {
+		margin: 0;
 		position: absolute;
-		width: 100%;
-		height: 100%;
-		left: 0;
-		top: 0;
-		backface-visibility: hidden;
-		border-radius: 2em;
-		border: 1px solid var(--fg-2);
-		box-sizing: border-box;
-		padding: 2em;
+		top: 50%;
+		left: 50%;
+		-ms-transform: translate(-50%, -50%);
+		transform: translate(-50%, -50%);
+		z-index: 10;
 	}
 
-	.back {
-		background: url(./svelte-logo.svg) no-repeat 5em 5em,
-			url(./svelte-logo.svg) no-repeat calc(100% - 5em) calc(100% - 5em);
-		background-size: 8em 8em, 8em 8em;
+	/* .emojis-list {
+		list-style: none;
+		padding: 0;
+		position: absolute;
+		transform: translate(-50%, -50%);
+	} */
+
+	.top-left-emojis {
+		list-style: none;
+		padding: 0;
+		position: absolute;
+		top: 110px;
+		left: 60px;
+		transform: translate(-50%, -50%);
+		z-index: 10;
 	}
 
-	.front {
-		background: url(./svelte-logo.svg) no-repeat 5em 5em,
-			url(./svelte-logo.svg) no-repeat calc(100% - 5em) calc(100% - 5em);
-		background-size: 8em 8em, 8em 8em;
+	.laugh-emojis {
+		list-style: none;
+		padding: 0;
+		position: absolute;
+		top: 110px;
+		right: 60px;
+		transform: translate(-50%, -50%);
+		z-index: 10;
 	}
 
-	.symbol {
-		font-size: 30em;
-		color: var(--fg-1);
+	.vomit-emojis {
+		list-style: none;
+		padding: 0;
+		position: absolute;
+		top: 110px;
+		right: 20px;
+		transform: translate(-50%, -50%);
+		z-index: 10;
 	}
 
-	.pattern {
-		width: 100%;
-		height: 100%;
-		background-color: var(--bg-2);
-		/* pattern from https://projects.verou.me/css3patterns/#marrakesh */
-		background-image: radial-gradient(var(--bg-3) 0.9em, transparent 1em),
-			repeating-radial-gradient(
-				var(--bg-3) 0,
-				var(--bg-3) 0.4em,
-				transparent 0.5em,
-				transparent 2em,
-				var(--bg-3) 2.1em,
-				var(--bg-3) 2.5em,
-				transparent 2.6em,
-				transparent 5em
-			);
-		background-size: 3em 3em, 9em 9em;
-		background-position: 0 0;
-		border-radius: 1em;
+	.emoji {
+		width: 65px;
+		height: 65px;
+		border-radius: 50%;
+		background-color: var(--color);
+		text-align: center;
+		line-height: 65px;
+		font-size: 45px;
 	}
 </style>

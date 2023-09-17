@@ -1,72 +1,40 @@
 <script lang="ts">
-	import { gameData, user } from '$lib/firebase';
-	import { getRandomColour, getRandomEmoji } from '$lib/random';
-	import { faker } from '@faker-js/faker';
+	import { gameData, user, playerData, playersData } from '$lib/firebase';
+	//current round, whether started, current host
+	//user id
+	//player's own data, editable
+	//list of all the other players, uneditable
+	import PlayerList from '$lib/components/PlayerList.svelte';
 
-	// $: console.log($gameData.players);
-
-	$: if (!$gameData.players[$user!.uid]) {
-		// console.log("User doens't exist", $user!.uid, $gameData.players[$user!.uid]);
-		$gameData.players[$user!.uid] = {
-			username: faker.animal.cetacean(),
-			color: getRandomColour(),
-			emoji: getRandomEmoji(),
-			score: 0
-		};
-	}
-
-	let players = [
-		{
-			username: 'fjasldkjf',
-			color: '#fad390'
-		},
-		{
-			username: 'fjasldkjf',
-			color: '#f8c291'
-		},
-		{
-			username: 'fjasldkjf',
-			color: '#82ccdd'
-		},
-		{
-			username: 'fjasldkjf',
-			color: '#b8e994'
-		},
-		{
-			username: 'fjasldkjf',
-			color: '#fad390'
-		}
-	];
+	$: isInvalid = $playerData?.username === '';
 </script>
 
-<div class="player-list">
-	{#each Object.entries($gameData.players) as [uid, player] (uid)}
+<!-- <div class="player-list">
+	{#each $playersData as player (player.id)}
 		<div class="player" style="--color: {player.color};">
 			{player.username}
 		</div>
 	{/each}
+</div> -->
+<div class="center">
+	<label for="username">Username:</label>
+
+	<input type="text" placeholder="Username" id="username" bind:value={$playerData.username} />
+	<p class:hidden={!isInvalid}>Username cannot be empty</p>
 </div>
 
-<label for="username">Username:</label>
-<input
-	type="text"
-	placeholder="Username"
-	id="username"
-	bind:value={$gameData.players[$user.uid].username}
-/>
+<PlayerList />
 
 <style>
-	.player-list {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		grid-gap: 20px;
+	.hidden {
+		opacity: 0;
 	}
 
-	.player {
-		margin: 10px;
-		padding: 10px;
-		border-radius: 25px;
-		background-color: var(--color);
+	p {
+		color: red;
+	}
+	.center {
 		text-align: center;
+		margin: 20px;
 	}
 </style>

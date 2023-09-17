@@ -22,13 +22,13 @@
 		height: 100%;
 		align-items: center;
 		justify-content: center;
-		perspective: 100vh;
+		perspective: 100dvh;
 	}
 
 	.card {
 		position: relative;
 		aspect-ratio: 2.5 / 3.5;
-		font-size: min(1vh, 0.25rem);
+		font-size: min(1dvh, 0.25rem);
 		height: 80em;
 		background: var(--bg-1);
 		border-radius: 2em;

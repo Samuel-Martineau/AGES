@@ -4,19 +4,27 @@
 	import Tab1 from './Tab1.svelte';
 	import Tab2 from './Tab2.svelte';
 	import Button from '$lib/components/Button.svelte';
-	import { gameData, user } from '$lib/firebase';
+	import { firestore, playersData, user, playerData, gameData } from '$lib/firebase';
+	import { DocumentReference, doc, setDoc, getDoc } from 'firebase/firestore';
+	import { goto } from '$app/navigation';
 
 	export let data: PageData;
+
+	$: areUsernamesValid = !$playersData.some((p) => (p.username?.trim() ?? '') === '');
+	$: if ($gameData.phase === 'makeMeme') goto('./makeMeme');
 
 	let items = [
 		{ label: 'Player List', value: 1, component: Tab1, props: {} },
 		{ label: 'QR Code', value: 2, component: Tab2, props: { gameCode: data.gameCode } }
 	];
-</script>
 
-<input bind:checked={$gameData.started} type="checkbox" />
-<input type="checkbox" bind:checked={$gameData.started} />
+	function startGame() {
+		$gameData.phase = 'makeMeme';
+	}
+</script>
 
 <div><Tabs {items} /></div>
 
-<Button href="/{data.gameCode}/makeMeme">Start Game</Button>
+{#if $gameData.host === $user?.uid}
+	<Button on:click={startGame} disabled={!areUsernamesValid}>Start Game</Button>
+{/if}

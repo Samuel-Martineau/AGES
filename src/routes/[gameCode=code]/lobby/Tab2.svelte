@@ -16,6 +16,7 @@
 
 <style>
 	img {
+		display: block;
 		margin-top: 70px;
 		padding: 5px;
 		border: 3px solid black;
@@ -23,5 +24,7 @@
 		background-color: white;
 		width: 250px;
 		height: 250px;
+		margin-left: auto;
+		margin-right: auto;
 	}
 </style>

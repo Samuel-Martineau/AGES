@@ -9,16 +9,18 @@
 
 	// $: isInvalid = $userData?.username === '';
 
-	function create() {
+	async function create() {
 		const gameCode = createGameCode();
 		const ref = doc(firestore, 'games', gameCode) as DocumentReference<GameData>;
-		setDoc(ref, {
+		await setDoc(ref, {
 			host: $user!.uid,
-			players: {},
-			round: [],
-			started: false
+			roundMemes: {},
+			phase: 'lobby'
 		});
-		goto(`/${gameCode}/lobby`);
+		fetch(`/${gameCode}/aiMeme`, {
+			method: 'POST'
+		});
+		await goto(`/${gameCode}/lobby`);
 	}
 </script>
 
@@ -34,6 +36,8 @@
 <!-- <div class="links"> -->
 <!-- <Button type="full" href="/join">Join Game</Button> -->
 <Button type="full" on:click={create}>Create Game</Button>
+
+<div />
 <!-- </div> -->
 <!-- {/if} -->
 

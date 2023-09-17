@@ -1,15 +1,29 @@
-<script>
+<script lang="ts">
 	import { emojis, colors } from '$lib/random';
-	import { playersData } from '$lib/firebase';
+	import { playersData, gameData, playerData, user } from '$lib/firebase';
+
+	$: pointsForGuessingAi = $gameData.roundMemes['ai'].guessedBy.includes($user!.uid)
+		? ($playersData.length - 1) * 100
+		: 0;
+	$: pointsForLaughter = 50 * $gameData.roundMemes[$user!.uid].laughedBy.length;
+	$: pointsForVomiting = -50 * $gameData.roundMemes[$user!.uid].vomitedBy.length;
+	$: $playerData.score = pointsForGuessingAi + pointsForLaughter + pointsForVomiting;
+
+	$: sorted = $playersData.toSorted((a, b) => {
+		return b.score + b.previousScore - (a.score + a.previousScore);
+	});
 </script>
 
 <div class="leaderboard">
-	{#each $playersData as player (player.id)}
+	{#each sorted as player (player.id)}
 		<div class="emoji" style="--color: {player.color};">
 			{player.emoji}
 		</div>
 
-		<div class="player" style="--color: {player.color};">{player.username}</div>
+		<div class="player" style="--color: {player.color};">
+			{player.username} <br />
+			{player.score + player.previousScore}
+		</div>
 	{/each}
 </div>
 
@@ -34,6 +48,7 @@
 		grid-template-columns: 60px auto;
 		align-items: center;
 		grid-gap: 15px;
+		width: 90vw;
 	}
 	.emoji {
 		width: 65px;

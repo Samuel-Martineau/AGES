@@ -1,68 +1,154 @@
 <!-- naive infinite scroll with #each loop -->
 
 <script lang="ts">
-	let memeUrls: string[] = [
-		'https://media.npr.org/assets/img/2015/03/03/overly_custom-39399d2cf8b6395770e3f10fd45b22ce39df70d4.jpg',
-		'https://primulaproducts.com/cdn/shop/articles/Coffee_Meme_-_1_600x.jpg?v=1633903536',
-		'https://d.newsweek.com/en/full/1176971/obesity-meme.png?w=1600&h=900&q=88&f=0c8293185b292dc0d5eb47eace629bd1',
-		'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcROp8KtGXSZiDqlMkUxjjXl0bjHacqNVkppbA&usqp=CAU'
-	];
+	import { goto } from '$app/navigation';
+	import Button from '$lib/components/Button.svelte';
+	import { gameData, playersData, user, playerData } from '$lib/firebase';
+	import { arrayRemove, arrayUnion, updateDoc } from 'firebase/firestore';
 
-	let reactionEmojis: string[] = ['🤖', '😂', '🤢'];
+	let laughedAt = '';
+	let vomitedAt = '';
+	let guessed = '';
+
+	async function guess(maker: string) {
+		if (maker === guessed) {
+			guessed = '';
+			updateDoc(gameData.ref!, {
+				[`roundMemes.${maker}.guessedBy`]: arrayRemove($user!.uid)
+			});
+		} else {
+			guessed = maker;
+			updateDoc(gameData.ref!, {
+				[`roundMemes.${maker}.guessedBy`]: arrayUnion($user!.uid)
+			});
+		}
+	}
+
+	async function laugh(maker: string) {
+		if (maker === laughedAt) {
+			laughedAt = '';
+			updateDoc(gameData.ref!, {
+				[`roundMemes.${maker}.laughedBy`]: arrayRemove($user!.uid)
+			});
+		} else {
+			laughedAt = maker;
+			updateDoc(gameData.ref!, {
+				[`roundMemes.${maker}.laughedBy`]: arrayUnion($user!.uid)
+			});
+		}
+	}
+
+	async function vomit(maker: string) {
+		if (maker === vomitedAt) {
+			vomitedAt = '';
+			updateDoc(gameData.ref!, {
+				[`roundMemes.${maker}.vomitedBy`]: arrayRemove($user!.uid)
+			});
+		} else {
+			vomitedAt = maker;
+			updateDoc(gameData.ref!, {
+				[`roundMemes.${maker}.vomitedBy`]: arrayUnion($user!.uid)
+			});
+		}
+	}
+
+	async function submit() {
+		$playerData.done = true;
+		await goto('./find/wait');
+	}
 </script>
 
-<!-- {#each [...Array(100).keys()] as _} -->
-<!-- {#each memeUrls as memeUrl}
-		<img src={memeUrl} alt="meme" />
-		{#each reactionEmojis as reactionEmoji}
-			<p>{reactionEmoji}</p>
-		{/each}
-	{/each} -->
+<div class="submit">
+	<Button on:click={submit} disabled={!laughedAt || !vomitedAt || !guessed}>Submit</Button>
+</div>
 
-<div class="emoji-container">
-	{#each memeUrls as memeUrl}
-		<div class="meme">
-			<img src={memeUrl} alt="meme" />
-			<div class="emoji-list">
-				{#each reactionEmojis as reactionEmoji}
-					<button on:click={() => alert('hi')}>{reactionEmoji}</button>
-				{/each}
+<div class="meme-container">
+	{#each Object.entries($gameData.roundMemes).sort( ([, { randomKey: k1 }], [, { randomKey: k2 }]) => k1.localeCompare(k2) ) as [maker, meme], i (maker)}
+		{#if maker !== $user?.uid}
+			<div class="meme">
+				<img src={meme.memeUrl} alt="meme" />
+				<div class="emoji-list">
+					<button on:click={() => guess(maker)} disabled={guessed !== '' && guessed !== maker}
+						>🤖</button
+					>
+					<button on:click={() => laugh(maker)} disabled={laughedAt !== '' && laughedAt !== maker}
+						>😂</button
+					>
+					<button on:click={() => vomit(maker)} disabled={vomitedAt !== '' && vomitedAt !== maker}
+						>🤢</button
+					>
+				</div>
 			</div>
-		</div>
+		{/if}
 	{/each}
 </div>
 
-<!-- {/each} -->
-
 <style>
-	img {
-		width: 90vw;
-		border-radius: 25px;
-		margin-left: 2.5vh;
-		margin-right: 2.5vh;
+	.submit {
+		position: absolute;
+		left: 15px;
+		bottom: 10px;
+		line-height: 5px;
+		z-index: 100;
 	}
 
-	.emoji-container {
+	img {
+		border-radius: 25px;
+		border-bottom-right-radius: 0;
+		display: block;
+		width: 100%;
+		box-sizing: content-box;
+	}
+
+	.meme-container {
+		width: 90vw;
+		gap: 25px;
 		display: flex;
 		flex-wrap: wrap;
+		height: 80dvh;
+		overflow-y: auto;
+		margin-top: -12dvh;
+		padding-top: 12dvh;
+		box-sizing: border-box;
+		mask-image: linear-gradient(to bottom, transparent 0%, black 15%);
 	}
 
 	.meme {
-		/* margin: 10px; */
 		text-align: right;
+		width: 100%;
 	}
 
 	.emoji-list {
 		display: flex;
 		justify-content: flex-end; /* Align emojis to the right */
-		margin-right: 2vh;
-		margin-bottom: 1.5vh;
+		gap: 10px;
+		padding-top: 10px;
 	}
 
 	button {
-		font-size: 2.5em;
-		margin: 0 0.2em 0 0;
+		font-size: 2.5rem;
+		line-height: 2.5rem;
+		height: 2.5rem;
+		width: 2.5rem;
+		border: none;
 		background: none;
-		border-radius: 10px;
+		transition: all 125ms ease-in-out;
+
+		&:hover {
+			transform: scale(1.05);
+		}
+
+		&:active {
+			transform: scale(0.95);
+		}
+
+		&:disabled {
+			filter: grayscale();
+
+			&:hover,
+			&:active {
+				transform: scale(1);
+			}
+		}
 	}
 </style>

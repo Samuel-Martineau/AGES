@@ -1,12 +1,14 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { DocumentReference, getDoc, getFirestore, setDoc } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
-import { userStore } from 'sveltefire';
+import { collectionStore, userStore } from 'sveltefire';
 import { page } from '$app/stores';
-import type { GameData } from '$lib/types';
-import { derived, type Writable } from 'svelte/store';
+import type { GameData, PlayerData } from '$lib/types';
+import { derived, type Readable, type Writable } from 'svelte/store';
 import { docStore, type DocStore } from 'sveltefire';
+import { faker } from '@faker-js/faker';
+import { getRandomColour, getRandomEmoji } from './random';
 
 const app = initializeApp({
 	apiKey: 'AIzaSyBM3FZk-CPbXlw-N4IgcNAo2ai7BwqWCeE',
@@ -36,10 +38,56 @@ export const gameData = (function () {
 	});
 	return {
 		subscribe,
+		get ref() {
+			return doc?.ref;
+		},
 		set: (v: GameData) => {
 			if (doc) doc.set(v);
 		}
-	} as Writable<GameData>;
+	} as Writable<GameData> & { ref: DocumentReference<GameData> | null | undefined };
+})();
+
+export const playersData = derived(page, ($page, set) => {
+	if ($page.params.gameCode) {
+		return collectionStore<PlayerData & { id: string }>(
+			firestore,
+			`games/${$page.params.gameCode}/players`
+		).subscribe(set);
+	} else {
+		set([]);
+	}
+}) as Readable<(PlayerData & { id: string })[]>;
+
+export const playerData = (function () {
+	let doc: DocStore<PlayerData> | null = null;
+	const { subscribe } = derived([page, user], ([$page, $user], set) => {
+		if ($page.params.gameCode && $user) {
+			doc = docStore<PlayerData>(firestore, `games/${$page.params.gameCode}/players/${$user.uid}`);
+			if (doc.ref)
+				getDoc(doc.ref).then((d) => {
+					if (!d.exists()) {
+						setDoc(d.ref, {
+							username: faker.animal.cetacean(),
+							color: getRandomColour(),
+							emoji: getRandomEmoji(),
+							score: 0,
+							previousScore: 0,
+							done: false
+						});
+					}
+				});
+			return doc.subscribe(set);
+		} else {
+			doc = null;
+			set(null);
+		}
+	});
+	return {
+		subscribe,
+		set: (v: PlayerData) => {
+			if (doc) doc.set(v);
+		}
+	} as Writable<PlayerData>;
 })();
 
 // export const userData = (function () {

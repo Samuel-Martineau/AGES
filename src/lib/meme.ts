@@ -13,6 +13,11 @@ export async function generateMeme(templateId: string, boxes: string[]): Promise
 			...boxes.map((b, i) => [`boxes[${i}][text]`, b])
 		])
 	});
-	const body = await res.json();
-	return body.data.url;
+	const body = await res.text();
+	try {
+		return JSON.parse(body).data.url;
+	} catch {
+		console.log(body);
+		return '';
+	}
 }
