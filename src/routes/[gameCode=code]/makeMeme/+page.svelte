@@ -51,24 +51,41 @@
 </script>
 
 <!-- <p><a href="/wait">Meme it!</a></p> -->
-<img src={memeUrl ?? memeTemplate.url} alt="meme" />
+<div class="container">
+	<img src={memeUrl ?? memeTemplate.url} alt="meme" />
 
-<form>
-	{#each boxes as box}
-		<input
-			type="text"
-			placeholder="Caption goes here"
-			bind:value={box}
-			on:input={debouncedGenerateMeme}
-		/>
-	{/each}
-</form>
+	<form>
+		{#each boxes as box}
+			<input
+				type="text"
+				placeholder="Caption goes here"
+				bind:value={box}
+				on:input={debouncedGenerateMeme}
+			/>
+		{/each}
+	</form>
 
-<Button on:click={submit} disabled={isInvalid || isGenerating}>Meme it!</Button>
-
-<div />
+	<div><Button on:click={submit} disabled={isInvalid || isGenerating}>Meme it!</Button></div>
+</div>
 
 <style>
+	.container {
+		padding-bottom: 25px;
+		display: flex;
+		flex-flow: row wrap;
+		height: 90dvh;
+		width: 90vw;
+		justify-content: center;
+		gap: 25px;
+		overflow-y: auto;
+		margin-top: -12dvh;
+		padding-top: 12dvh;
+		box-sizing: border-box;
+		mask-image: linear-gradient(to bottom, transparent 0%, black 15%);
+		overflow-y: auto;
+		/* overflow-x: hidden; */
+	}
+
 	/* * {
 		justify-content: initial !important;
 	} */
@@ -76,16 +93,24 @@
 	img {
 		width: 90vw;
 		border-radius: 25px;
-		margin-left: 2.5dvh;
+		/* margin-left: 2.5dvh;
 		margin-right: 2.5dvh;
-		margin-bottom: 2.5dvh;
+		margin-bottom: 2.5dvh; */
+	}
+
+	form {
+		padding: 0 20px;
+		display: flex;
+		gap: 10px;
+		flex-flow: row wrap;
 	}
 
 	input {
-		width: 90vw;
-		margin-left: 2.5dvh;
+		width: 100%;
+		/* width: 90vw; */
+		/* margin-left: 2.5dvh;
 		margin-right: 2.5dvh;
-		margin-bottom: 2dvh;
+		margin-bottom: 2dvh; */
 		line-height: 7dvh;
 		cursor: pointer;
 		display: inline-block;

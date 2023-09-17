@@ -23,5 +23,8 @@
 	<div />
 	<h1>Cappin</h1>
 	<SignedIn><slot /></SignedIn>
-	<SignedOut><Logo /></SignedOut>
+	<SignedOut>
+		<Logo />
+		<div />
+	</SignedOut>
 </FirebaseApp>

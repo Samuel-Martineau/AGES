@@ -112,7 +112,7 @@
 		gap: 25px;
 		display: flex;
 		flex-wrap: wrap;
-		height: 80dvh;
+		height: 90dvh;
 		overflow-y: auto;
 		margin-top: -12dvh;
 		padding-top: 12dvh;
@@ -133,7 +133,7 @@
 		padding-bottom: 25px;
 		display: flex;
 		flex-wrap: wrap;
-		height: 80dvh;
+		height: 90dvh;
 		overflow-y: auto;
 		margin-top: -12dvh;
 		padding-top: 12dvh;
